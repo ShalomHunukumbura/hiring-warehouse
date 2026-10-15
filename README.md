@@ -3,8 +3,8 @@
 A data warehouse over the job postings [Unlisted](https://findunlisted.link) collects, and a
 page that shows which skills new postings ask for, by type of role.
 
-Unlisted reads about 40,000 open jobs from company career pages every hour, and deletes each
-job 14 days after it was posted. This project keeps a daily copy of what changed, so the
+Unlisted reads tens of thousands of open jobs from company career pages every hour (22,094 on
+15 October 2026), and deletes each job 14 days after it was posted. This project keeps a daily copy of what changed, so the
 history survives, and models it into a star schema with dbt.
 
 ## What you get
