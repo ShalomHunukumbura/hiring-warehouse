@@ -1,0 +1,12 @@
+{
+  "extract_date": "2026-10-15",
+  "extracted_at": "2026-10-15T09:56:51+00:00",
+  "since": null,
+  "watermark": "2026-10-15T09:55:50.843024+00:00",
+  "rows": {
+    "jobs": 23098,
+    "job_skills": 33007,
+    "companies": 7733,
+    "present": 23098
+  }
+}
