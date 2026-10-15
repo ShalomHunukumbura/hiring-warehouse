@@ -1,0 +1,61 @@
+name: daily
+
+on:
+  schedule:
+    # 02:45 UTC, after Unlisted's sync at 23 minutes past the hour.
+    - cron: "45 2 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: daily
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --locked --no-dev
+
+      - name: Extract what changed in Unlisted
+        run: uv run hiring-warehouse extract
+        env:
+          UNLISTED_DATABASE_URL: ${{ secrets.UNLISTED_DATABASE_URL }}
+
+      # Save the extract before building anything. Unlisted deletes old jobs, so the
+      # extract is the only copy; a failing dbt test must not lose it.
+      - name: Commit the extract
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/extracts
+          git commit -q -m "data: extract $(date -u +%F)"
+          git push
+
+      # Rebuilds the warehouse from every extract, then runs every test. If a test
+      # fails, the job stops here and the page keeps yesterday's numbers.
+      - run: uv run dbt build
+
+      - run: uv run hiring-warehouse export
+
+      - name: Build the warehouse docs
+        run: |
+          uv run dbt docs generate --static
+          mkdir -p site/docs
+          cp target/static_index.html site/docs/index.html
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deploy
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,16 @@
+family,priority,pattern
+AI and machine learning,1,\b(machine learning|ml|ai|deep learning|llm|nlp|computer vision|research scientist|applied scientist)s?\b
+Sales,2,\b(sales|account executive|business development|bdr|sdr|account manager|partnerships)s?\b
+Data,3,\b(data|analytics|analyst|bi|business intelligence|dbt|etl|statistical|statistics|statistician)s?\b
+Security,4,\b(security|appsec|infosec|soc|penetration|cyber)s?\b
+DevOps and infrastructure,5,\b(devops|sre|site reliability|platform|infrastructure|cloud|systems engineer|network engineer|reliability)s?\b
+Software engineering,6,\b(software|engineer|developer|programmer|frontend|front-end|backend|back-end|full[- ]?stack|ios|android|mobile|qa|test|sdet|architect|application development|member of technical staff)s?\b
+Design,7,\b(design|designer|ux|ui|researcher)s?\b
+Product,8,\b(product manager|product owner|product lead|head of product|program manager|technical program)s?\b
+Marketing,9,\b(marketing|growth|content|brand|seo|communications|pr manager|social media)s?\b
+Customer support and success,10,\b(customer|support|success|implementation|onboarding|solutions consultant)s?\b
+Finance and legal,11,\b(finance|financial|accountant|accounting|controller|tax|payroll|legal|counsel|paralegal|compliance|attorney|lawyer)s?\b
+People and recruiting,12,\b(recruiter|recruiting|talent|people|hr|human resources)s?\b
+Operations,13,\b(operations|ops|logistics|supply chain|procurement|office|assistant|coordinator)s?\b
+Healthcare,14,\b(nurse|nursing|rn|lpn|physician|doctor|therapist|therapy|clinical|clinician|medical|pharmacist|pharmacy|dental|dentist|behavior technician|rbt|pathologist|psychologist|counselor|caregiver|patient|health)s?\b
+Skilled trades and manufacturing,15,\b(technician|mechanic|electrician|machinist|welder|assembler|assembly|manufacturing|production|maintenance|warehouse|driver|installer|plumber|hvac|carpenter|fabricat\w*)s?\b

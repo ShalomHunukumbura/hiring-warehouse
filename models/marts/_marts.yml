@@ -1,0 +1,125 @@
+version: 2
+
+models:
+  - name: fact_job_posting
+    description: One row per job posting, with keys to the dimensions. The centre of the star schema.
+    columns:
+      - name: job_id
+        description: Unlisted's id for the job.
+        tests: [unique, not_null]
+      - name: company_id
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_company')
+                field: company_id
+      - name: location_key
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_location')
+                field: location_key
+      - name: posted_on
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_day
+      - name: status
+        tests:
+          - accepted_values:
+              arguments:
+                values: [open, closed, removed]
+      - name: days_to_close
+        description: Days from posting to closing. Null while open, and for jobs removed without closing.
+      - name: pay_min_usd_yearly
+        description: Lower end of the pay range as US dollars a year. Hourly pay counts 2,080 hours a year.
+
+  - name: bridge_job_skill
+    description: Which skills each job asks for. Links fact_job_posting to dim_skill.
+    tests:
+      - unique_combination:
+          arguments:
+            columns: [job_id, skill]
+    columns:
+      - name: job_id
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('fact_job_posting')
+                field: job_id
+      - name: skill
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_skill')
+                field: skill
+
+  - name: fact_daily_open_jobs
+    description: One row per job per extract day it was in Unlisted (a periodic snapshot).
+    tests:
+      - unique_combination:
+          arguments:
+            columns: [snapshot_date, job_id]
+
+  - name: dim_company
+    description: One row per company, from the newest extract.
+    columns:
+      - name: company_id
+        tests: [unique, not_null]
+
+  - name: dim_location
+    description: Country, region and remote rules. One row per combination seen.
+    columns:
+      - name: location_key
+        tests: [unique, not_null]
+      - name: workplace
+        tests:
+          - accepted_values:
+              arguments:
+                values: [On-site, Hybrid, Remote]
+
+  - name: dim_date
+    description: One row per day.
+    columns:
+      - name: date_day
+        tests: [unique, not_null]
+
+  - name: dim_skill
+    description: The skill dictionary from seeds/skills.csv.
+    columns:
+      - name: skill
+        tests: [unique, not_null]
+      - name: category
+        tests:
+          - accepted_values:
+              arguments:
+                values: [language, frontend, backend, database, cloud, devops, data, analytics, ai, mobile, testing, design, business]
+
+  - name: dim_job_history
+    description: Every version of every job (SCD type 2).
+    columns:
+      - name: job_version_key
+        tests: [unique, not_null]
+
+  - name: mart_skill_weekly
+    description: New postings per week that mention each skill, and their share of the week's postings.
+    tests:
+      - unique_combination:
+          arguments:
+            columns: [week_start, job_family, skill]
+
+  - name: mart_skill_trend
+    description: Each skill's share of a job family's new postings in the last 28 days against the 28 days before.
+    tests:
+      - unique_combination:
+          arguments:
+            columns: [job_family, skill]
+
+  - name: mart_workplace_weekly
+    description: New postings per week by workplace and remote reach.

@@ -1,0 +1,32 @@
+version: 2
+
+models:
+  - name: int_job_versions
+    description: >
+      One row per version of each job (SCD type 2). A new version starts when any tracked
+      attribute changes. valid_to is the date the next version starts, or null for the
+      current version.
+    columns:
+      - name: job_version_key
+        tests: [unique, not_null]
+      - name: valid_from
+        tests: [not_null]
+
+  - name: int_job_lifecycle
+    description: Posted, first and last seen, closed and removed dates for each job.
+    columns:
+      - name: job_id
+        tests: [unique, not_null]
+      - name: status
+        tests:
+          - accepted_values:
+              arguments:
+                values: [open, closed, removed]
+
+  - name: int_job_family
+    description: Each job's family (Data, Sales, ...), from its current title.
+    columns:
+      - name: job_id
+        tests: [unique, not_null]
+      - name: job_family
+        tests: [not_null]

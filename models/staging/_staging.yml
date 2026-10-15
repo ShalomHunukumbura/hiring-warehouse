@@ -1,0 +1,66 @@
+version: 2
+
+models:
+  - name: stg_unlisted__jobs
+    description: Every job row from every extract, renamed and typed. One row per job per extract it changed in.
+    tests:
+      - unique_combination:
+          arguments:
+            columns: [job_id, extract_date]
+    columns:
+      - name: job_id
+        description: Unlisted's id for the job.
+        tests: [not_null]
+      - name: extract_date
+        tests: [not_null]
+      - name: company_id
+        tests: [not_null]
+      - name: ats
+        tests:
+          - accepted_values:
+              arguments:
+                values: [greenhouse, lever, ashby, smartrecruiters, workday, workable, recruitee, bamboohr]
+      - name: title
+        tests: [not_null]
+      - name: remote_scope
+        tests:
+          - accepted_values:
+              arguments:
+                values: [global, country, region, hybrid]
+      - name: open_to
+        tests:
+          - accepted_values:
+              arguments:
+                values: [anywhere, country, region]
+
+  - name: stg_unlisted__job_skills
+    description: Skills found in each job's description, per extract.
+    tests:
+      - unique_combination:
+          arguments:
+            columns: [job_id, extract_date, skill]
+    columns:
+      - name: skill
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('skills')
+                field: skill
+
+  - name: stg_unlisted__companies
+    description: Every company, once per extract.
+    tests:
+      - unique_combination:
+          arguments:
+            columns: [company_id, extract_date]
+
+  - name: stg_unlisted__present
+    description: Every job that existed in Unlisted on each extract date.
+    tests:
+      - unique_combination:
+          arguments:
+            columns: [job_id, extract_date]
+    columns:
+      - name: is_open
+        tests: [not_null]

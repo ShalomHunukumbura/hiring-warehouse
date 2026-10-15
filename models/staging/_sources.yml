@@ -1,0 +1,19 @@
+version: 2
+
+sources:
+  - name: unlisted
+    description: >
+      Daily extracts of Unlisted's Postgres database, written by `hiring-warehouse extract`.
+      Each extract is a folder named extract_date=YYYY-MM-DD. DuckDB reads every folder at
+      once and turns the folder name into an extract_date column.
+    meta:
+      external_location: "read_parquet('{{ var('extracts') }}/*/{name}.parquet', hive_partitioning = true)"
+    tables:
+      - name: jobs
+        description: Every job added or changed since the previous extract. One row per job per extract it changed in.
+      - name: job_skills
+        description: Skills found in the description of each job in the same extract.
+      - name: companies
+        description: Every company, in full, in every extract.
+      - name: present
+        description: The id of every job in Unlisted at extract time, and whether it was open.

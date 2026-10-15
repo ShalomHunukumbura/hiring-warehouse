@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hiring trends: which skills job postings ask for</title>
+<meta name="description" content="Which skills new job postings ask for, by type of role, from tens of thousands of jobs on company career pages. Updated daily.">
+<style>
+  :root {
+    color-scheme: light;
+    --page: #f9f9f7; --surface: #fcfcfb;
+    --text: #0b0b0b; --text-2: #52514e; --muted: #898781;
+    --grid: #e1e0d9; --axis: #c3c2b7; --border: rgba(11,11,11,0.10);
+    --series-1: #2a78d6; --series-2: #eb6834; --series-3: #1baf7a; --series-4: #eda100;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --page: #0d0d0d; --surface: #1a1a19;
+      --text: #f0efec; --text-2: #c3c2b7; --muted: #898781;
+      --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10);
+      --series-1: #3987e5; --series-2: #d95926; --series-3: #199e70; --series-4: #c98500;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--text);
+         font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 920px; margin: 0 auto; padding: 32px 20px 64px; }
+  h1 { font-size: 28px; line-height: 1.2; margin: 0 0 6px; }
+  h2 { font-size: 18px; margin: 0 0 4px; }
+  p { margin: 0 0 12px; }
+  .lede { color: var(--text-2); margin-bottom: 24px; }
+  a { color: inherit; }
+  .sub { color: var(--text-2); font-size: 14px; margin-bottom: 14px; }
+  .filters { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 16px; }
+  select, button { font: inherit; color: var(--text); background: var(--surface);
+                   border: 1px solid var(--axis); border-radius: 6px; padding: 6px 10px; }
+  :focus-visible { outline: 2px solid var(--series-1); outline-offset: 2px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+          padding: 20px; margin-bottom: 20px; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .tile { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; }
+  .tile .label { color: var(--text-2); font-size: 14px; }
+  .tile .value { font-size: 32px; font-weight: 600; line-height: 1.2; font-variant-numeric: tabular-nums; }
+  .chart { position: relative; }
+  svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .tick { fill: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+  .label-text { fill: var(--text); font-size: 13px; }
+  .value-text { fill: var(--text-2); font-size: 12px; font-variant-numeric: tabular-nums; }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 16px; color: var(--text-2); font-size: 14px; margin-bottom: 8px; }
+  .legend button { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; font-size: 14px;
+                   color: var(--text-2); cursor: pointer; }
+  .key { display: inline-block; width: 16px; height: 2px; border-radius: 1px; }
+  .tooltip { position: absolute; top: 0; pointer-events: none; background: var(--surface);
+             border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 13px;
+             box-shadow: 0 4px 16px rgba(0,0,0,0.12); white-space: nowrap; z-index: 2; }
+  .tooltip .when { color: var(--text-2); margin-bottom: 4px; }
+  .tooltip .row { display: flex; align-items: center; gap: 6px; }
+  .tooltip strong { font-variant-numeric: tabular-nums; }
+  details { margin-top: 12px; }
+  summary { cursor: pointer; color: var(--text-2); font-size: 14px; }
+  .table-wrap { max-height: 360px; overflow: auto; margin-top: 8px; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; font-variant-numeric: tabular-nums; }
+  th, td { text-align: right; padding: 4px 10px; border-bottom: 1px solid var(--grid); }
+  th:first-child, td:first-child { text-align: left; }
+  th { position: sticky; top: 0; background: var(--surface); color: var(--text-2); font-weight: 600; }
+  .pick { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
+  .note { color: var(--text-2); font-size: 14px; }
+  ul { margin: 0 0 12px; padding-left: 20px; }
+  .bar { cursor: default; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Hiring trends</h1>
+  <p class="lede">Which skills new job postings ask for, by type of role. Built from the jobs
+    <a href="https://findunlisted.link">Unlisted</a> collects from company career pages, and updated every day.</p>
+
+  <div class="tiles" aria-live="polite">
+    <div class="tile"><div class="label">Open jobs</div><div class="value" id="t-open">–</div><div class="note" id="t-open-note"></div></div>
+    <div class="tile"><div class="label">New postings, last 7 days</div><div class="value" id="t-new">–</div></div>
+    <div class="tile"><div class="label">Remote, last 7 days</div><div class="value" id="t-remote">–</div></div>
+  </div>
+
+  <div class="filters">
+    <label>Type of role
+      <select id="family"></select>
+    </label>
+  </div>
+
+  <section class="card" aria-labelledby="top-h">
+    <h2 id="top-h">Most asked-for skills</h2>
+    <p class="sub" id="top-sub"></p>
+    <div class="chart" id="top-chart"></div>
+    <details>
+      <summary>All skills as a table</summary>
+      <div class="table-wrap"><table id="top-table"></table></div>
+    </details>
+  </section>
+
+  <section class="card" aria-labelledby="week-h">
+    <h2 id="week-h">Share of new postings, week by week</h2>
+    <p class="sub" id="week-sub"></p>
+    <div class="pick">
+      <label>Add a skill <select id="add-skill"></select></label>
+      <span class="note">Up to four. Click a skill below to remove it.</span>
+    </div>
+    <div class="legend" id="week-legend"></div>
+    <div class="chart" id="week-chart"></div>
+    <details>
+      <summary>As a table</summary>
+      <div class="table-wrap"><table id="week-table"></table></div>
+    </details>
+  </section>
+
+  <section class="card" aria-labelledby="work-h">
+    <h2 id="work-h">On-site, hybrid or remote</h2>
+    <p class="sub">New postings in the last four weeks, all types of role.</p>
+    <div class="chart" id="work-chart"></div>
+  </section>
+
+  <section class="card">
+    <h2>Download the data</h2>
+    <p>The warehouse tables, as Parquet. Open them with DuckDB, pandas or Polars.</p>
+    <ul>
+      <li><a href="data/fact_job_posting.parquet">fact_job_posting</a>: one row per job posting</li>
+      <li><a href="data/bridge_job_skill.parquet">bridge_job_skill</a>: which skills each job asks for</li>
+      <li><a href="data/mart_skill_weekly.parquet">mart_skill_weekly</a> and <a href="data/mart_skill_trend.parquet">mart_skill_trend</a>: the numbers behind the charts</li>
+      <li><a href="data/dim_company.parquet">dim_company</a>, <a href="data/dim_location.parquet">dim_location</a>, <a href="data/dim_skill.parquet">dim_skill</a></li>
+    </ul>
+    <p><a href="docs/">Warehouse documentation</a>: every table and column, and how they connect.</p>
+  </section>
+
+  <section class="card">
+    <h2>How these numbers are made</h2>
+    <ul>
+      <li>Jobs come from public company career pages (Greenhouse and Ashby boards) that Unlisted reads every hour. This is not every job on the market. Large companies that use other systems are missing.</li>
+      <li>A skill counts when its name appears in the job's title or description, using <a href="https://github.com/ShalomHunukumbura/hiring-warehouse/blob/main/seeds/skills.csv">a list of 85 skills</a>. A mention is not always a requirement.</li>
+      <li>The type of role comes from the job title. Titles that match no type are counted as "Other".</li>
+      <li>Weeks start on Monday and count jobs by the day they were posted. The newest week is still filling up, so it is drawn as a dashed line.</li>
+      <li id="history-note"></li>
+    </ul>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const pct = (v, digits = 0) => v == null ? '–' : (v * 100).toFixed(digits) + '%';
+const num = (v) => v == null ? '–' : v.toLocaleString('en-US');
+const day = (iso) => new Date(iso + 'T00:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+const shortDay = (iso) => new Date(iso + 'T00:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+const NS = 'http://www.w3.org/2000/svg';
+function el(name, attrs = {}, parent) {
+  const node = document.createElementNS(NS, name);
+  for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
+  if (parent) parent.appendChild(node);
+  return node;
+}
+function niceMax(v) {
+  if (v <= 0) return 0.1;
+  const step = Math.pow(10, Math.floor(Math.log10(v)));
+  // Four gridlines, so pick a top that divides into four round steps.
+  for (const m of [1, 1.2, 1.6, 2, 2.4, 3, 4, 5, 6, 8, 10]) if (m * step >= v) return m * step;
+  return 10 * step;
+}
+
+let summary, trend, weekly, workplace;
+let family = 'All jobs';
+// Selected skills keep their colour slot until removed, so adding or removing one never
+// repaints the others.
+let slots = [null, null, null, null];
+
+async function load() {
+  [summary, trend, weekly, workplace] = await Promise.all(
+    ['summary', 'trend', 'weekly', 'workplace'].map((f) => fetch(`data/${f}.json`).then((r) => r.json())));
+  $('t-open').textContent = num(summary.open_jobs);
+  $('t-open-note').textContent = `on ${day(summary.newest_extract)}`;
+  $('t-new').textContent = num(summary.new_postings_7d);
+  $('t-remote').textContent = pct(summary.remote_share_7d);
+  $('history-note').textContent =
+    `The warehouse has kept a daily copy since ${day(summary.first_extract)} (${summary.extracts} so far). ` +
+    'Unlisted only keeps jobs for 14 days, so anything older exists only here.';
+  const select = $('family');
+  for (const f of summary.families) {
+    const option = document.createElement('option');
+    option.value = f.name;
+    option.textContent = `${f.name} (${num(f.postings_28d)})`;
+    select.appendChild(option);
+  }
+  select.addEventListener('change', () => { family = select.value; resetSkills(); render(); });
+  $('add-skill').addEventListener('change', (e) => {
+    const free = slots.indexOf(null);
+    if (e.target.value && free !== -1) slots[free] = e.target.value;
+    renderWeekly();
+  });
+  window.addEventListener('resize', () => render());
+  resetSkills();
+  render();
+}
+
+function resetSkills() {
+  slots = trend[family].filter((s) => s.postings > 0).slice(0, 4).map((s) => s.skill);
+  while (slots.length < 4) slots.push(null);
+}
+
+function render() { renderTop(); renderWeekly(); renderWorkplace(); }
+
+// Horizontal bars: one series, so one colour and no legend; the title names it.
+function bars(container, items, { label, value, tip }) {
+  container.innerHTML = '';
+  const width = container.clientWidth || 800;
+  const labelW = Math.min(190, width * 0.38);
+  const rowH = 26, top = 4, right = 56;
+  const height = top + items.length * rowH + 22;
+  const max = niceMax(Math.max(...items.map(value), 0));
+  const x = (v) => labelW + (v / max) * (width - labelW - right);
+  const svg = el('svg', { viewBox: `0 0 ${width} ${height}`, role: 'img', 'aria-label': container.dataset.label || '' }, container);
+  for (let i = 0; i <= 4; i++) {
+    const v = (max / 4) * i;
+    el('line', { x1: x(v), x2: x(v), y1: top, y2: height - 20, stroke: 'var(--grid)' }, svg);
+    el('text', { x: x(v), y: height - 4, 'text-anchor': 'middle', class: 'tick' }, svg).textContent = pct(v);
+  }
+  const tooltip = document.createElement('div');
+  tooltip.className = 'tooltip'; tooltip.hidden = true;
+  container.appendChild(tooltip);
+  items.forEach((item, i) => {
+    const y = top + i * rowH;
+    const w = Math.max(x(value(item)) - labelW, 1);
+    el('text', { x: labelW - 8, y: y + rowH / 2 + 4, 'text-anchor': 'end', class: 'label-text' }, svg).textContent = label(item);
+    // 4px rounded end, square at the baseline.
+    const r = Math.min(4, w / 2), h = rowH - 10, y0 = y + 5;
+    el('path', {
+      d: `M${labelW},${y0} h${w - r} a${r},${r} 0 0 1 ${r},${r} v${h - 2 * r} a${r},${r} 0 0 1 -${r},${r} h-${w - r} z`,
+      fill: 'var(--series-1)',
+    }, svg);
+    el('text', { x: labelW + w + 6, y: y + rowH / 2 + 4, class: 'value-text' }, svg).textContent = pct(value(item), 1);
+    // The hit target is the whole row, bigger than the bar.
+    const hit = el('rect', { x: 0, y, width, height: rowH, fill: 'transparent', class: 'bar', tabindex: 0 }, svg);
+    const show = () => {
+      tooltip.innerHTML = tip(item);
+      tooltip.hidden = false;
+      const left = Math.min(labelW + w + 12, width - tooltip.offsetWidth);
+      tooltip.style.left = Math.max(0, left) + 'px';
+      tooltip.style.top = (y + rowH) + 'px';
+    };
+    hit.addEventListener('mouseenter', show);
+    hit.addEventListener('focus', show);
+    hit.addEventListener('mouseleave', () => { tooltip.hidden = true; });
+    hit.addEventListener('blur', () => { tooltip.hidden = true; });
+  });
+}
+
+function renderTop() {
+  const rows = trend[family];
+  const familyInfo = summary.families.find((f) => f.name === family);
+  $('top-sub').textContent =
+    `Share of the ${num(familyInfo.postings_28d)} ${family === 'All jobs' ? '' : family.toLowerCase() + ' '}postings in the 28 days to ${day(summary.newest_extract)} that mention each skill.`;
+  const hasPrevious = rows.some((r) => r.previous != null);
+  $('top-chart').dataset.label = `Top 15 skills for ${family}`;
+  bars($('top-chart'), rows.slice(0, 15), {
+    label: (r) => r.skill,
+    value: (r) => r.share || 0,
+    tip: (r) => `<div class="when">${r.skill} · ${r.category}</div>` +
+      `<div class="row">Mentioned in <strong>${pct(r.share, 1)}</strong> (${num(r.postings)} postings)</div>` +
+      (r.change != null ? `<div class="row">Change from the 28 days before: <strong>${r.change >= 0 ? '+' : ''}${(r.change * 100).toFixed(1)} pts</strong></div>` : ''),
+  });
+  const table = $('top-table');
+  table.innerHTML = `<thead><tr><th>Skill</th><th>Area</th><th>Postings</th><th>Share</th>${hasPrevious ? '<th>28 days before</th><th>Change</th>' : ''}</tr></thead>`;
+  const body = document.createElement('tbody');
+  for (const r of rows) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${r.skill}</td><td>${r.category}</td><td>${num(r.postings)}</td><td>${pct(r.share, 1)}</td>` +
+      (hasPrevious ? `<td>${pct(r.previous, 1)}</td><td>${r.change == null ? '–' : (r.change >= 0 ? '+' : '') + (r.change * 100).toFixed(1) + ' pts'}</td>` : '');
+    body.appendChild(tr);
+  }
+  table.appendChild(body);
+}
+
+function renderWeekly() {
+  const data = weekly[family];
+  const chosen = slots.map((s, i) => s && { skill: s, slot: i }).filter(Boolean);
+  // Skill picker: every skill not already shown.
+  const add = $('add-skill');
+  add.innerHTML = '<option value="">Choose…</option>';
+  for (const r of trend[family]) {
+    if (slots.includes(r.skill)) continue;
+    const option = document.createElement('option');
+    option.value = r.skill; option.textContent = r.skill;
+    add.appendChild(option);
+  }
+  add.disabled = !slots.includes(null);
+
+  const legend = $('week-legend');
+  legend.innerHTML = '';
+  for (const c of chosen) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.setAttribute('aria-label', `Remove ${c.skill}`);
+    b.innerHTML = `<span class="key" style="background:var(--series-${c.slot + 1})"></span>${c.skill} ✕`;
+    b.addEventListener('click', () => { slots[c.slot] = null; renderWeekly(); });
+    legend.appendChild(b);
+  }
+
+  const weeks = data.weeks;
+  $('week-sub').textContent = weeks.length < 3
+    ? `Only ${weeks.length} week${weeks.length === 1 ? '' : 's'} of history so far. The lines grow by a point each week.`
+    : `Weeks starting Monday, by the day each job was posted.`;
+
+  const container = $('week-chart');
+  container.innerHTML = '';
+  const width = container.clientWidth || 800;
+  const height = Math.round(Math.min(340, Math.max(220, width * 0.42)));
+  const m = { top: 12, right: 110, bottom: 26, left: 44 };
+  const values = chosen.flatMap((c) => data.skills[c.skill] || []);
+  const max = niceMax(Math.max(...values, 0.01));
+  const x = (i) => m.left + (weeks.length === 1 ? (width - m.left - m.right) / 2 : (i / (weeks.length - 1)) * (width - m.left - m.right));
+  const y = (v) => height - m.bottom - (v / max) * (height - m.top - m.bottom);
+  const svg = el('svg', { viewBox: `0 0 ${width} ${height}`, role: 'img', 'aria-label': `Weekly share of postings for ${chosen.map((c) => c.skill).join(', ')}` }, container);
+  for (let i = 0; i <= 4; i++) {
+    const v = (max / 4) * i;
+    el('line', { x1: m.left, x2: width - m.right, y1: y(v), y2: y(v), stroke: i === 0 ? 'var(--axis)' : 'var(--grid)' }, svg);
+    el('text', { x: m.left - 6, y: y(v) + 4, 'text-anchor': 'end', class: 'tick' }, svg).textContent = pct(v);
+  }
+  const every = Math.ceil(weeks.length / Math.max(1, Math.floor((width - m.left - m.right) / 70)));
+  weeks.forEach((w, i) => {
+    if (i % every === 0) el('text', { x: x(i), y: height - 6, 'text-anchor': 'middle', class: 'tick' }, svg).textContent = shortDay(w);
+  });
+  const lastComplete = data.complete.lastIndexOf(true);
+  const labels = [];
+  for (const c of chosen) {
+    const series = data.skills[c.skill] || [];
+    const color = `var(--series-${c.slot + 1})`;
+    const solid = series.slice(0, lastComplete + 1).map((v, i) => `${i ? 'L' : 'M'}${x(i)},${y(v)}`).join('');
+    if (solid) el('path', { d: solid, fill: 'none', stroke: color, 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }, svg);
+    if (lastComplete < series.length - 1) {
+      const from = Math.max(lastComplete, 0);
+      const dashed = series.slice(from).map((v, i) => `${i ? 'L' : 'M'}${x(from + i)},${y(v)}`).join('');
+      el('path', { d: dashed, fill: 'none', stroke: color, 'stroke-width': 2, 'stroke-dasharray': '4 4' }, svg);
+    }
+    series.forEach((v, i) => {
+      el('circle', { cx: x(i), cy: y(v), r: 4, fill: data.complete[i] ? color : 'var(--surface)', stroke: color, 'stroke-width': 2 }, svg);
+    });
+    labels.push({ skill: c.skill, y: y(series[series.length - 1] || 0) });
+  }
+  // Direct labels at the line ends, nudged apart so they never overlap.
+  labels.sort((a, b) => a.y - b.y);
+  for (let i = 1; i < labels.length; i++) labels[i].y = Math.max(labels[i].y, labels[i - 1].y + 16);
+  for (const l of labels) el('text', { x: width - m.right + 10, y: l.y + 4, class: 'label-text' }, svg).textContent = l.skill;
+
+  // Crosshair and tooltip.
+  const cross = el('line', { y1: m.top, y2: height - m.bottom, stroke: 'var(--axis)', visibility: 'hidden' }, svg);
+  const tooltip = document.createElement('div');
+  tooltip.className = 'tooltip'; tooltip.hidden = true;
+  container.appendChild(tooltip);
+  const overlay = el('rect', { x: m.left, y: m.top, width: width - m.left - m.right, height: height - m.top - m.bottom, fill: 'transparent', tabindex: 0 }, svg);
+  let current = weeks.length - 1;
+  const show = (i) => {
+    current = Math.max(0, Math.min(weeks.length - 1, i));
+    cross.setAttribute('x1', x(current)); cross.setAttribute('x2', x(current));
+    cross.setAttribute('visibility', 'visible');
+    tooltip.innerHTML = `<div class="when">Week of ${shortDay(weeks[current])}${data.complete[current] ? '' : ' (still filling)'} · ${num(data.postings[current])} postings</div>` +
+      chosen.map((c) => `<div class="row"><span class="key" style="background:var(--series-${c.slot + 1})"></span>${c.skill} <strong>${pct((data.skills[c.skill] || [])[current], 1)}</strong></div>`).join('');
+    tooltip.hidden = false;
+    const left = x(current) + 12 + tooltip.offsetWidth > width ? x(current) - 12 - tooltip.offsetWidth : x(current) + 12;
+    tooltip.style.left = Math.max(0, left) + 'px';
+    tooltip.style.top = m.top + 'px';
+  };
+  const hide = () => { cross.setAttribute('visibility', 'hidden'); tooltip.hidden = true; };
+  overlay.addEventListener('mousemove', (e) => {
+    const box = svg.getBoundingClientRect();
+    const px = (e.clientX - box.left) * (width / box.width);
+    let best = 0;
+    weeks.forEach((_, i) => { if (Math.abs(x(i) - px) < Math.abs(x(best) - px)) best = i; });
+    show(best);
+  });
+  overlay.addEventListener('mouseleave', hide);
+  overlay.addEventListener('focus', () => show(current));
+  overlay.addEventListener('blur', hide);
+  overlay.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') { show(current - 1); e.preventDefault(); }
+    if (e.key === 'ArrowRight') { show(current + 1); e.preventDefault(); }
+  });
+
+  const table = $('week-table');
+  table.innerHTML = `<thead><tr><th>Week of</th><th>Postings</th>${chosen.map((c) => `<th>${c.skill}</th>`).join('')}</tr></thead>`;
+  const body = document.createElement('tbody');
+  weeks.forEach((w, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${day(w)}${data.complete[i] ? '' : ' (so far)'}</td><td>${num(data.postings[i])}</td>` +
+      chosen.map((c) => `<td>${pct((data.skills[c.skill] || [])[i], 1)}</td>`).join('');
+    body.appendChild(tr);
+  });
+  table.appendChild(body);
+}
+
+function renderWorkplace() {
+  const weeks = [...new Set(workplace.map((r) => r.week))].sort().slice(-4);
+  const groups = [
+    ['On-site', null, 'On-site'], ['Hybrid', null, 'Hybrid'],
+    ['Remote', 'One country', 'Remote, one country'], ['Remote', 'One region', 'Remote, one region'],
+    ['Remote', 'Worldwide', 'Remote, worldwide'],
+  ];
+  const recent = workplace.filter((r) => weeks.includes(r.week));
+  const total = recent.reduce((s, r) => s + r.postings, 0);
+  const items = groups.map(([w, reach, name]) => {
+    const n = recent.filter((r) => r.workplace === w && (r.reach || null) === reach).reduce((s, r) => s + r.postings, 0);
+    return { name, n, share: total ? n / total : 0 };
+  });
+  $('work-chart').dataset.label = 'Share of new postings by workplace';
+  bars($('work-chart'), items, {
+    label: (r) => r.name,
+    value: (r) => r.share,
+    tip: (r) => `<div class="when">${r.name}</div><div class="row"><strong>${pct(r.share, 1)}</strong> (${num(r.n)} postings)</div>`,
+  });
+}
+
+load().catch((err) => {
+  document.querySelector('main').insertAdjacentHTML('afterbegin', `<p class="card">Could not load the data: ${err.message}</p>`);
+});
+</script>
+</body>
+</html>
