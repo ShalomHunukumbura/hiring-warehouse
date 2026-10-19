@@ -12,12 +12,17 @@ from . import __version__
 
 
 def cmd_extract(args: argparse.Namespace) -> int:
-    from .extract import extract
+    from .extract import extract, extracts_dir
 
     url = os.environ.get("UNLISTED_DATABASE_URL")
     if not url:
         print("set UNLISTED_DATABASE_URL to Unlisted's Postgres connection string", file=sys.stderr)
         return 2
+    folder = extracts_dir(args.root) / f"extract_date={args.today.isoformat()}"
+    if folder.exists():
+        # Re-running the daily job on the same day: keep the extract we already have.
+        print(f"extract: {folder} already exists, keeping it")
+        return 0
     result = extract(url, args.root, args.today, args.root / "seeds" / "skills.csv")
     print(
         f"extract: {result.jobs} changed jobs, {result.skills} job skills, "
